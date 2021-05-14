@@ -1,5 +1,5 @@
-input_str = document.getElementById("input_str");
-output_str = document.getElementById("output_str");
+const input_str = document.getElementById("input_str");
+const output_str = document.getElementById("output_str");
 
 FATHATAN = "\u064b";
 DAMMATAN = "\u064c";
@@ -11,7 +11,7 @@ SHADDA = "\u0651";
 SUKUN = "\u0652";
 TASHKEEL = [FATHATAN, DAMMATAN, KASRATAN, FATHA, DAMMA, KASRA, SUKUN, SHADDA];
 
-var LETTERS_DICT = {
+let LETTERS_DICT = {
   ا: "ا",
   أ: "ا",
   إ: "ا",
@@ -53,7 +53,7 @@ var LETTERS_DICT = {
   ي: "ى",
   ئ: "ى",
 };
-letters = [
+let letters = [
   "ا",
   "أ",
   "إ",
@@ -99,6 +99,7 @@ function is_alpha(word) {
   flag = word.search(/^[\u0621-\u064A0-9 ]+$/) != -1;
   return flag;
 }
+
 function is_vocalized(word) {
   if (is_alpha(word)) {
     return false;
@@ -112,6 +113,7 @@ function is_vocalized(word) {
   }
   return flag;
 }
+
 function is_tashkeel(archar) {
   /*Checks if the given ``archar`` Arabic Tashkeel Marks (
       - FATHA, DAMMA, KASRA, SUKUN,
@@ -177,6 +179,13 @@ function convertText() {
     console.log(input_str.value);
     output_str.value = old_arabic_script(input_str.value);
     document.getElementById("saved").innerHTML = "";
+
+    // send To From
+    getIP()
+      .then((data) => sendToFrom(data, value))
+      .catch((e) => console.log("error:", e));
+  } else {
+    output_str.value = "";
   }
 }
 
@@ -192,3 +201,43 @@ function copy_to_clipboard() {
   /* Alert the copied text */
   document.getElementById("saved").innerHTML = "تم النسخ";
 }
+
+function sendToFrom(IP, text) {
+  IP = encodeURIComponent(IP)
+  text = encodeURIComponent(text);
+
+  const formId = '1FAIpQLSf66z3dWQKxwpV0D2aIKxaB99EDg5bevULgRNUOam4YZYayCQ';
+  const queryString = '/formResponse?&entry.1985535664=' + IP + '&entry.488732670=' + text;
+  // '&submit=SUBMIT'
+
+  const url = 'https://docs.google.com/forms/d/e/' + formId + queryString;
+
+  const options = {
+    method: "POST",
+    mode: "no-cors", // apparently Google will only submit a form if "mode" is "no-cors"
+    redirect: "follow",
+    referrer: "no-referrer"
+  }
+
+  fetch(url, options).then(() => {
+    console.log("sent!");
+  }).catch((e) => console.log("error:", e));
+}
+
+function getIP() {
+  return fetch('https://api.ipify.org')
+    .then((response) => response.text());
+}
+
+getIP()
+  .then((ip) => {
+    console.log("ip:", ip);
+    // increment visitors
+    fetch('https://docs.google.com/forms/d/e/1FAIpQLSfVCa3MjjrD-hzWGtIiZ6ydNj7l-RiYkjsFHHQnpMpu3soRUQ/formResponse?&entry.693375865=' + ip
+      , { method: "POST", mode: "no-cors", redirect: "follow", referrer: "no-referrer" })
+      .then(() => {
+        console.log("Visit Recorded");
+      }).catch((e) => console.log("error:", e));
+
+  })
+  .catch((e) => console.log("error:", e));
